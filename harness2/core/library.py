@@ -33,6 +33,7 @@ from typing import Sequence
 
 from . import context
 from . import tree as harness_tree
+from .admission import review_lesson
 from .tree import SurfaceSpec
 
 
@@ -103,6 +104,9 @@ class Library:
         keep = {slug(task_id) for task_id in task_ids}
         self.forget([entry for entry in self.entries() if entry not in keep])
 
+    def quarantine_dir(self, task_id: str) -> Path:
+        return self.dir / "quarantine" / slug(task_id)
+
     def add(
         self,
         task_id: str,
@@ -116,11 +120,24 @@ class Library:
         """Store one adopted harness plus why it was adopted, and rebuild INDEX.md from disk.
 
         The tree is checked for grader verdicts before anything is written.
+        A lesson that fails `admission.review_lesson` is written under
+        `quarantine/` instead of the live index. Later tasks never read it.
         """
         if not has_experience(experience):
             return None
         context.assert_tree_has_no_grader_verdicts(harness)
         context.assert_tree_has_no_grader_verdicts({"EXPERIENCE.md": str(experience) + why})
+        verdict = review_lesson(experience, strict_unseen=True)
+        if not verdict.admit:
+            return self._quarantine(
+                task_id,
+                harness,
+                why=why,
+                label=label,
+                run_id=run_id,
+                experience=experience or {},
+                reasons=verdict.reasons,
+            )
         d = self.entry_dir(task_id)
 
         shutil.rmtree(d / "harness", ignore_errors=True)
@@ -150,6 +167,40 @@ class Library:
         (d / "EXPERIENCE.md").write_text("\n".join(lines), encoding="utf-8")
         self.rebuild_index()
         return d
+
+    def _quarantine(
+        self,
+        task_id: str,
+        harness: harness_tree.Tree,
+        *,
+        why: str,
+        label: str,
+        run_id: str,
+        experience: dict,
+        reasons: list[str],
+    ) -> None:
+        """Keep a refused lesson on disk without listing it in INDEX.md."""
+        d = self.quarantine_dir(task_id)
+        shutil.rmtree(d, ignore_errors=True)
+        (d / "harness").mkdir(parents=True, exist_ok=True)
+        harness_tree.write_tree(self.surface, harness, d / "harness", stubs=False)
+        lines = [
+            f"# quarantined {task_id}",
+            "",
+            f"- adopted: `{label}`" + (f"  (run `{run_id}`)" if run_id else ""),
+            "",
+            "## Why this stayed out of the library",
+            *[f"- {reason}" for reason in reasons],
+            "",
+        ]
+        if why.strip():
+            lines += ["## Selector note", why.strip(), ""]
+        lines += ["## Experience that was refused", ""]
+        for key in ("cue", "lesson", "evidence", "confidence", "unseen", "proposer", "observer"):
+            if experience.get(key):
+                lines.append(f"- **{key}**: {str(experience[key]).strip()}")
+        (d / "REFUSED.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+        return None
 
     def rebuild_index(self) -> Path:
         """Regenerate INDEX.md from what is on disk."""

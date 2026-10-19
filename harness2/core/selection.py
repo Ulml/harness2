@@ -471,6 +471,12 @@ def _distil(
             "context/adoption.json maps any anonymous IDs in that reasoning to rollout labels. "
             "Compare context/harness/ with context/base_harness/ and the candidates in "
             "context/pool/. Read the decisions and execution contrasts before writing.\n\n"
+            "Also record these lines inside <experience>, or the library will quarantine the lesson:\n"
+            "- unseen: passed on a held-out subject that shares no name or model id with this task\n"
+            "- proposer: the edit role\n"
+            "- observer: a different role that only compared traces (not the proposer)\n"
+            "Do not name the source subject inside cue or lesson. Do not treat a timeout as a design flaw. "
+            "Do not drop a guardrail to make the deliverable look better.\n\n"
             + layout,
         ]
     )
@@ -495,7 +501,7 @@ def _distil(
         if ":" in line:
             key, _, val = line.partition(":")
             key = key.strip().lower()
-            if key in ("cue", "lesson", "evidence", "confidence"):
+            if key in ("cue", "lesson", "evidence", "confidence", "unseen", "proposer", "observer", "falsifier"):
                 out[key] = val.strip()
     if not all(out.get(key) for key in ("cue", "lesson", "evidence")):
         return {}

@@ -145,11 +145,15 @@ class DemoProposer(Proposer):
                 "observed: the probe total included the credits the base run omitted\n"
                 f"verdict: {'helped' if changed else 'no observed effect'}\n</edits>\n\n"
             ) + (
-                "<experience>\ncue: When a ledger includes credits and debits\n"
-                "lesson: Include both signs when summing in scripts/summarize.py.\n"
+                "<experience>\ncue: When a sum must include both signs\n"
+                "lesson: Do not drop negative rows before reducing a total.\n"
                 "evidence: The scripts/summarize.py row -- removing the positive-only filter "
-                "changed the probe total to include the credits omitted by the base trajectory.\n"
-                "confidence: high for this observed arithmetic contrast\n</experience>"
+                "changed the probe total to include the credits omitted by the base trajectory. "
+                "The contrast reproduced on a second reading of the same rule.\n"
+                "confidence: high for this observed arithmetic contrast\n"
+                "unseen: passed on a held-out ledger with different row ids and amounts\n"
+                "proposer: inv-edit\n"
+                "observer: contrast-against-base\n</experience>"
                 if changed
                 else "NO_ENTRY"
             )
