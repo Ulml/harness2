@@ -1,33 +1,45 @@
-# Critique branch — `video-critiques`
+# Critique branches
 
 `main` is a content-identical mirror of
 [google-research/harness2](https://github.com/google-research/harness2)
-at `1cfe254` (Apache-2.0). This branch is **not** the Google release and is not
-affiliated with Google. It adds the gates the Discover AI review asked for.
+at `1cfe254` (Apache-2.0, Xu et al., arXiv:2610.14224). These branches are a
+study. They are not the Google release and they are not affiliated with Google.
 
-## What the video argues
+## `video-critiques`
 
 Source: Discover AI, *Recursive Self Improvement (RSI) of an AI Harness (Google)*,
 15 October 2026, https://www.youtube.com/watch?v=klihXDN2xp4
 
-The review covers three papers. The code in this repository is the third,
-Harness² (Xu et al., arXiv:2610.14224). The critiques it treats as still open,
-and the fixes it points at, are:
+| Critique in the video | Fix in `harness2/core/admission.py` |
+| --- | --- |
+| Narrow self-rewrites over-fit one task, then collapse (PAC argument the video attributes to Wei et al., *Harness Self-Evolution*) | A lesson that still names the source subject is identity bleed and stays out of the index |
+| A false lesson spreads through the library like a virus | Nothing enters `INDEX.md` until `unseen` records a held-out subject. Refusals go to `quarantine/` |
+| The agent deletes a security rule to look solved (the video points at Harmony Harness for this) | `guardrails_intact`: a constitution line may not disappear |
+| The same model proposes and then blesses its own edit | `proposer` and `observer` must differ |
+| A timeout is written up as a design flaw | Transient evidence is not a lesson unless a second contrast is cited |
 
-| Critique | Where it is aimed | Fix this branch implements |
-| --- | --- | --- |
-| A narrow self-rewrite over-fits and then collapses (PAC argument, Wei et al., *Harness Self-Evolution*) | Any lesson that names one subject | `identity_tokens` / `leaked_tokens` refuse a lesson that still carries the source subject's name or model id |
-| A false lesson spreads through the library like a virus | `Library.add` writes every well-formed lesson into `INDEX.md` | A lesson is quarantined under `quarantine/` until `unseen` records a held-out subject. Later tasks read only `harnesses/` |
-| The agent deletes a security rule to make the task look solved | Harmony Harness's point, which the video endorses | `guardrails_intact`: a constitution line may not disappear |
-| The same model proposes, executes, and blesses its own edit | Role collapse / self-deception | `proposer` and `observer` must differ when both are recorded |
-| A timeout or 429 is written up as a design flaw | Misattributed noise | Transient evidence is not a lesson unless a second contrast is cited |
+## `research-transfer`
 
-The code is `harness2/core/admission.py`. `Library.add` calls it before anything
-reaches the live index. The demo reflector now records an unseen proof, a
-distinct observer, and no identity token, so the existing workflow test still
-sees a legitimate lesson enter the library. A lesson that fails a gate is kept
-on disk and kept out of `INDEX.md`.
+This branch keeps those gates and adds `harness2/core/transfer.py`. The extra
+rules are a judgment from the papers, not a paraphrase of the video.
 
-Harmony's multi-objective search and the factorized invariant/binding split are
-**not** in this branch. They are the next one, `research-transfer`, because they
-come from the papers and from failure cases the video only names in passing.
+* Harmony Harness (Yu et al., arXiv:2610.15150, Google Cloud AI Research, CMU,
+  DeepMind) treats functionality and integrity as different objectives and
+  factorizes a general mechanism from a subject-specific binding. A weighted
+  score would hide a candidate that wins by cheating. `pareto_front` keeps the
+  tradeoff visible. `FLOORS` then refuses a lesson whose integrity or transfer
+  is under 0.5, with no trade against functionality. `rebind` is the
+  composition step: `{{slot}}` filled with a new subject, holes left visible.
+* Harness²'s own appendix reports selection mistakes, premises that cost 2 to
+  11 points, and execution noise. A lesson now needs a falsifier
+  (`contradicted` demotes it on a later run) and a reproduced contrast.
+* The paper's ablation says dropping scoping hurts JobBench most, and that
+  inheriting a harness tailored to the previous task makes the next recursion
+  noisy. `scope_lessons` ranks by the procedure after identity tokens are
+  stripped. The next subject is a rebind of the procedure, not a copy of the
+  previous tree.
+
+The demo lesson was rewritten so it still passes: no ledger id in the lesson,
+an unseen held-out ledger, a distinct observer, a falsifier, and a reproduced
+contrast. `tests/test_workflow.py` still expects that legitimate lesson to
+enter the library.

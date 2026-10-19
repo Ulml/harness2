@@ -153,7 +153,9 @@ class DemoProposer(Proposer):
                 "confidence: high for this observed arithmetic contrast\n"
                 "unseen: passed on a held-out ledger with different row ids and amounts\n"
                 "proposer: inv-edit\n"
-                "observer: contrast-against-base\n</experience>"
+                "observer: contrast-against-base\n"
+                "falsifier: a second ledger still disagrees with the signed sum after credits are included\n"
+                "</experience>"
                 if changed
                 else "NO_ENTRY"
             )

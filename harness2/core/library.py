@@ -34,6 +34,7 @@ from typing import Sequence
 from . import context
 from . import tree as harness_tree
 from .admission import review_lesson
+from .transfer import transfer_block
 from .tree import SurfaceSpec
 
 
@@ -128,7 +129,9 @@ class Library:
         context.assert_tree_has_no_grader_verdicts(harness)
         context.assert_tree_has_no_grader_verdicts({"EXPERIENCE.md": str(experience) + why})
         verdict = review_lesson(experience, strict_unseen=True)
-        if not verdict.admit:
+        reasons = list(verdict.reasons)
+        reasons.extend(transfer_block(experience))
+        if reasons:
             return self._quarantine(
                 task_id,
                 harness,
@@ -136,7 +139,7 @@ class Library:
                 label=label,
                 run_id=run_id,
                 experience=experience or {},
-                reasons=verdict.reasons,
+                reasons=reasons,
             )
         d = self.entry_dir(task_id)
 
